@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+  web_dev:
+    build: .
+    ports:
+    - "4000:4000"
+    volumes:
+    - .:/switch
+    environment:
+    - ENV=development
+    - PORT=4000
+    - DB=mongodb+srv://switch:switch1@flask-switch-larnu.mongodb.net/dbswitch
+    - IP=0.0.0.0
+networks:
+  default:
+    name: switch
