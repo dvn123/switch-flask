@@ -1,46 +1,55 @@
 import os
-from flask import request, jsonify
+from flask import jsonify, Blueprint
 from bson import ObjectId
-from app import app, mongo
+from switch.db import get_db, init_db
 
 ROOT_PATH = os.environ.get('ROOT_PATH')
+francesinhas = Blueprint('francesinhas', __name__, url_prefix='/francesinhas')
 
 
-@app.route("/top5", methods=['GET'])
+@francesinhas.route("/top_5", methods=['GET'])
 def get_websites():
-    websites = list(mongo.db.websites.find())
+    websites = list(get_db().websites.find())
     json_res = []
     for website in websites:
         json_res.append(website)
-    return jsonify(json_res)
+    return jsonify(json_res), 200
 
 
-@app.route("/rate/<restaurant_id>/<int:rating>", methods=['PUT'])
+@francesinhas.route("/update_top_5", methods=['GET'])
+def update_top_5():
+    try:
+        init_db()
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    finally:
+        return jsonify(success=True), 200
+
+
+@francesinhas.route("/rate/<restaurant_id>/<int:rating>", methods=['PUT'])
 def rate_restaurant(restaurant_id, rating):
-    if restaurant_id is None:
-         return jsonify({'ok': False, 'message': 'Empty restaurant ID'}), 400
-    restaurant_id = ObjectId(restaurant_id)
-    restaurant = mongo.db.websites.find_one({"_id": restaurant_id})
-    print(restaurant)
+    try:
+        restaurant_id = ObjectId(restaurant_id)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+    restaurant = get_db().websites.find_one({"_id": restaurant_id})
     if restaurant is None:
-        return jsonify({'ok': False, 'message': 'Invalid restaurant ID'}), 400
+        return jsonify({'success': False, 'message': 'No restaurant with such an ID'}), 400
 
     if rating is None or rating > 5 or rating < 0:
-        jsonify({'ok': False, 'message': 'Rating Must be between 0 and 5'}), 400
+        jsonify({'success': False, 'message': 'Rating must be between 0 and 5'}), 400
 
     if 'n_ratings' not in restaurant:
         print("First time")
         restaurant['n_ratings'] = 1
         restaurant['rating'] = rating
-        mongo_response = mongo.db.websites.replace_one({"_id": restaurant_id}, restaurant)
-        print(mongo_response)
-        return jsonify(), 200
     else:
         print("Not first time")
         restaurant['n_ratings'] = restaurant['n_ratings'] + 1
         mean = restaurant['rating']
         restaurant['rating'] = mean + (rating - mean)/restaurant['n_ratings']
 
-        mongo_response = mongo.db.websites.replace_one({"_id": restaurant_id}, restaurant)
-        print(mongo_response)
-        return jsonify(), 200
+    mongo_response = get_db().websites.replace_one({"_id": restaurant_id}, restaurant)
+    print(mongo_response)
+    return jsonify(success=True), 200
