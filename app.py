@@ -31,7 +31,7 @@ app.json_encoder = JSONEncoder
 update_database(get_top_5())
 
 
-@app.route("/")
+'''@app.route("/")
 def hello():
     return "Hello"
 
@@ -52,3 +52,4 @@ def get_websites():
 
 if __name__ == "__main__":
     app.run()
+'''
