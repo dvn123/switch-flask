@@ -1,11 +1,10 @@
-import os
 import json
+import os
+from bson import ObjectId
 import datetime
-from bson.objectid import ObjectId
 from flask import Flask
-from flask_pymongo import PyMongo
-from scraper import get_top_5
-from switch.db import update_database
+from switch.scraper import get_top_5
+
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -16,17 +15,18 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-# create the flask object
-app = Flask(__name__)
-
-# add mongo url to flask config, so that flask_pymongo can use it to make connection
-#app.config['MONGO_URI'] = os.environ.get('DB')
-app.config['MONGO_URI'] = "mongodb+srv://switch:switch1@flask-switch-larnu.mongodb.net/dbswitch"
-mongo = PyMongo(app)
-update_database(get_top_5())
-
-# use the modified encoder class to handle ObjectId & datetime object while jsonifying the response.
-app.json_encoder = JSONEncoder
-
-
-from switch.controller import *
+def create_app():
+    app = Flask(__name__)
+    app.config.from_mapping(
+        SECRET_KEY='switch1',
+        MONGO_URI=os.environ.get('DB') or "mongodb+srv://switch:switch1@flask-switch-larnu.mongodb.net/dbswitch",
+        DEBUG=os.environ.get('ENV') or "development"
+    )
+    app.scraper = get_top_5
+    from . import db
+    with app.app_context():
+        db.init_app(app)
+    from switch.controller import francesinhas
+    app.register_blueprint(francesinhas)
+    app.json_encoder = JSONEncoder
+    return app
