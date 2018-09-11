@@ -2,8 +2,8 @@ from flask_pymongo import PyMongo
 from flask import current_app, g
 from flask.cli import with_appcontext
 import click
-
-
+import datetime
+from datetime import timedelta
 def get_db():
     if 'db' not in g:
         g.db = PyMongo(current_app).db
@@ -13,8 +13,16 @@ def get_db():
 
 def init_db():
     db = get_db()
-    '''db.websites.drop()'''
-    update_database(current_app.scraper())
+    websites = list(db.websites.find())
+    if len(websites) == 5:
+        yesterday = datetime.datetime.utcnow() - timedelta(days=1)
+        for website in websites:
+            if website['last-modified'] < yesterday:
+                return update_database(current_app.scraper())
+    else:
+        db.websites.drop()
+        return update_database(current_app.scraper())
+
 
 
 @click.command('init-db')
@@ -38,6 +46,8 @@ def update_database(websites):
                                             'email': website['email'],
                                             'link': website['link'],
                                             'name': website['name'],
-                                            'phone-number': website['phone-number']}}, upsert=True)
+                                            'last-modified': datetime.datetime.utcnow(),
+                                            'phone-number': website['phone-number']}}, upsert=True
+                                 )
         names.append(website['name'])
     g.db.websites.delete_many({"name": {"$nin": names}})
