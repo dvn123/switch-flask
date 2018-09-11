@@ -1,7 +1,8 @@
 import os
 from flask import jsonify, Blueprint
 from bson import ObjectId
-from switch.db import get_db, init_db
+from switch.db import get_db, init_db, update_database
+from switch.scraper import get_top_5
 
 ROOT_PATH = os.environ.get('ROOT_PATH')
 francesinhas = Blueprint('francesinhas', __name__, url_prefix='/francesinhas')
@@ -19,7 +20,7 @@ def get_websites():
 @francesinhas.route("/update_top_5", methods=['GET'])
 def update_top_5():
     try:
-        init_db()
+        update_database(get_top_5())
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
     finally:
