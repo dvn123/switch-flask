@@ -6,4 +6,4 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 ENTRYPOINT ["python","index.py"]
 #CMD ["flask", "run --host=IP --port=PORT",]
-#CMD ["flask run"]
+#python -m pytest tests/ CMD ["flask run"]

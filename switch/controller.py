@@ -31,14 +31,14 @@ def rate_restaurant(restaurant_id, rating):
     try:
         restaurant_id = ObjectId(restaurant_id)
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
+        return jsonify({'success': False, 'message': "String is not a valid ID"}), 400
 
     restaurant = get_db().websites.find_one({"_id": restaurant_id})
     if restaurant is None:
         return jsonify({'success': False, 'message': 'No restaurant with such an ID'}), 400
 
     if rating is None or rating > 5 or rating < 0:
-        jsonify({'success': False, 'message': 'Rating must be between 0 and 5'}), 400
+        return jsonify({'success': False, 'message': 'Rating must be between 0 and 5'}), 400
 
     if 'n_ratings' not in restaurant:
         print("First time")
