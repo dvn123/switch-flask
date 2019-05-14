@@ -9,7 +9,6 @@ services:
     environment:
     - ENV=development
     - PORT=4000
-    - DB=mongodb+srv://USER:PASSWORD@REDACTED.mongodb.net/db
     - IP=0.0.0.0
 networks:
   default:
